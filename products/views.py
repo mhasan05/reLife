@@ -17,9 +17,10 @@ class ProductView(APIView):
             except Product.DoesNotExist:
                 return Response({"status": "error", "message": "Product not found"}, status=status.HTTP_404_NOT_FOUND)
 
-        products = Product.objects.all().order_by('-created_on')
+        products = Product.objects.filter(is_active=True).order_by('-created_on')
+        total_products = Product.objects.filter(is_active=True).count()
         serializer = ProductSerializer(products, many=True)
-        return Response({"status": "success", "data": serializer.data}, status=status.HTTP_200_OK)
+        return Response({"status": "success", "total_products": total_products, "data": serializer.data}, status=status.HTTP_200_OK)
 
     def post(self, request):
         serializer = ProductSerializer(data=request.data)
@@ -60,9 +61,10 @@ class CompanyView(APIView):
             except Company.DoesNotExist:
                 return Response({"status": "error", "message": "Company not found"}, status=status.HTTP_404_NOT_FOUND)
 
-        companies = Company.objects.all().order_by('-created_on')
+        companies = Company.objects.filter(is_active=True).order_by('-created_on')
+        total_companies = Company.objects.filter(is_active=True).count()
         serializer = CompanySerializer(companies, many=True)
-        return Response({"status": "success", "data": serializer.data}, status=status.HTTP_200_OK)
+        return Response({"status": "success", "total_companies": total_companies, "data": serializer.data}, status=status.HTTP_200_OK)
 
     def post(self, request):
         serializer = CompanySerializer(data=request.data)
@@ -105,8 +107,9 @@ class CategoryView(APIView):
                 return Response({"status": "error", "message": "Category not found"}, status=status.HTTP_404_NOT_FOUND)
 
         categories = Category.objects.all().order_by('-created_on')
+        total_categories = Category.objects.count()
         serializer = CategorySerializer(categories, many=True)
-        return Response({"status": "success", "data": serializer.data}, status=status.HTTP_200_OK)
+        return Response({"status": "success", "total_categories": total_categories, "data": serializer.data}, status=status.HTTP_200_OK)
 
     def post(self, request):
         serializer = CategorySerializer(data=request.data)
