@@ -2,7 +2,11 @@ from django.db import models
 from django.utils import timezone
 from accounts.models import UserAuth  # Import User model from accounts app
 from products.models import Product  # Import Product model from products app
+import datetime
+import random
 
+from django.db.models.signals import post_save
+from django.dispatch import receiver
 
 class Order(models.Model):
     ORDER_STATUS_CHOICES = (
@@ -16,7 +20,7 @@ class Order(models.Model):
     invoice_number = models.CharField(max_length=20, unique=True)  # Unique invoice number for the order
     user_id = models.ForeignKey(UserAuth, on_delete=models.CASCADE)  # Link to User model
     total_amount = models.DecimalField(max_digits=12, decimal_places=2, default=0)  # Total price of the order
-    shipping_address = models.CharField(max_length=255)
+    shipping_address = models.CharField(max_length=255,null=True, blank=True)  # Shipping address for the order
     order_date = models.DateTimeField(default=timezone.now)
     order_status = models.CharField(max_length=10, choices=ORDER_STATUS_CHOICES, default='pending')
     created_on = models.DateTimeField(auto_now_add=True)
@@ -29,18 +33,38 @@ class Order(models.Model):
     def __str__(self):
         return self.invoice_number
 
-    def get_total_price(self):
+    def generate_invoice_number(self):
         """
-        Calculates the total price by summing the price of all items in the order.
+        Generates a unique invoice number based on the current date and a random number.
         """
-        order_items = self.items.all()  # Get related order items
-        total_price = sum([item.get_item_total() for item in order_items])
-        return total_price
+        date_part = datetime.datetime.now().strftime("%Y%m%d")
+        random_part = random.randint(1000, 9999)
+        return f"INV-{date_part}-{random_part}"
 
     def save(self, *args, **kwargs):
-        # Update total_amount before saving the order
-        self.total_amount = self.get_total_price()
+        # Generate a unique invoice number if it doesn't exist
+        if not self.invoice_number:
+            while True:
+                new_invoice_number = self.generate_invoice_number()
+                if not Order.objects.filter(invoice_number=new_invoice_number).exists():
+                    self.invoice_number = new_invoice_number
+                    break
+
         super().save(*args, **kwargs)
+
+
+# # Signal to calculate total_amount after order is saved
+# @receiver(post_save, sender=Order)
+# def update_total_amount(sender, instance, **kwargs):
+#     """
+#     Updates the total amount of the order after it has been saved.
+#     """
+#     order_items = instance.items.all()  # Access related order items
+#     total_price = sum([item.get_item_total() for item in order_items])
+#     if instance.total_amount != total_price:
+#         instance.total_amount = total_price
+#         instance.save()
+
 
 
 
@@ -48,7 +72,7 @@ class OrderItem(models.Model):
     order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='items')  # Link to the Order
     product = models.ForeignKey(Product, on_delete=models.PROTECT)  # Link to the Product
     quantity = models.PositiveIntegerField(default=1)  # Quantity of the product in the order
-    unit_price = models.DecimalField(max_digits=10, decimal_places=2)  # Price at the time of order
+    unit_price = models.DecimalField(max_digits=10, decimal_places=2,null=True,blank=True)  # Price at the time of order
     created_on = models.DateTimeField(auto_now_add=True)
     updated_on = models.DateTimeField(auto_now=True)
 
@@ -59,15 +83,15 @@ class OrderItem(models.Model):
     def __str__(self):
         return f"{self.quantity} x {self.product.product_name}"
 
-    def get_item_total(self):
+    def items_total(self):
         """
         Calculates the total price for this item based on quantity and unit price.
         """
         return self.unit_price * self.quantity
 
     def save(self, *args, **kwargs):
-        # Ensure unit_price is set to the product's discounted price when saving
-        self.unit_price = self.product.get_discounted_price()  # Set the price to the discounted price
+        # Ensure unit_price is set to the product's selling price when saving
+        self.unit_price = self.product.selling_price()  # Set the price to the selling price
         super().save(*args, **kwargs)
 
 

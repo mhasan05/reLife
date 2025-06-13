@@ -7,7 +7,7 @@ from .models import UserAuth, Area, Address
 class UserAuthSerializer(serializers.ModelSerializer):
     class Meta:
         model = UserAuth
-        fields = ['user_id', 'full_name', 'email', 'phone', 'image', 'shop_name', 'default_address', 'area', 'is_approved', 'is_active', 'is_staff', 'is_superuser', 'date_joined', 'created_on', 'updated_on']
+        fields = ['user_id', 'full_name', 'email', 'phone', 'image', 'shop_name', 'shop_address', 'area', 'is_approved', 'is_active', 'is_staff', 'is_superuser', 'date_joined', 'created_on', 'updated_on']
 
 
 
@@ -17,7 +17,7 @@ class UserAuthSerializer(serializers.ModelSerializer):
     class Meta:
         model = UserAuth
         fields = [
-            'user_id', 'full_name', 'email', 'phone', 'image', 'shop_name', 'default_address', 'area', 'is_approved', 'is_active', 'is_staff', 'is_superuser', 'date_joined', 'created_on', 'updated_on'
+            'user_id', 'full_name', 'email', 'phone', 'image', 'shop_name', 'shop_address', 'area', 'is_approved', 'is_active', 'is_staff', 'is_superuser', 'date_joined', 'created_on', 'updated_on'
         ]
 
 

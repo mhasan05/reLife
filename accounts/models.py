@@ -26,7 +26,7 @@ class UserAuth(AbstractBaseUser,PermissionsMixin):
     phone = models.CharField(max_length=15, unique=True)
     image = models.ImageField(upload_to='profile_images/', blank=True, null=True)
     shop_name = models.CharField(max_length=100, blank=True, null=True)
-    default_address = models.ForeignKey('Address', on_delete=models.SET_NULL, blank=True, null=True, related_name='default_address')
+    shop_address = models.CharField(max_length=500,null=True, blank=True)
     area = models.ForeignKey(Area, on_delete=models.CASCADE, blank=True, null=True)
     is_approved = models.BooleanField(default=False)
     is_active = models.BooleanField(default=True)

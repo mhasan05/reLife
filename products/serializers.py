@@ -27,4 +27,14 @@ class ProductSerializer(serializers.ModelSerializer):
         Returns a list of category names associated with the product.
         """
         return [category.name for category in obj.category_id.all()]
+    
+class CompanySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Product.company_id.field.related_model
+        fields = ['company_id', 'company_name', 'logo','is_active', 'created_on', 'updated_on']
+
+class CategorySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Product.category_id.field.related_model
+        fields = ['category_id', 'name', 'description', 'created_on', 'updated_on']
 

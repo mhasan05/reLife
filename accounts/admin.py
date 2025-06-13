@@ -14,10 +14,10 @@ class UserAuthAdmin(admin.ModelAdmin):
             'fields': ('full_name', 'email', 'phone', 'image')
         }),
         ('Shop', {
-            'fields': ('shop_name', 'default_address', 'area')
+            'fields': ('shop_name', 'shop_address', 'area')
         }),
         ('Permissions', {
-            'fields': ('is_approved', 'is_staff', 'is_superuser')
+            'fields': ('is_active', 'is_approved', 'is_staff', 'is_superuser')
         }),
     )
 
