@@ -10,6 +10,7 @@ class OrderViewSet(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, pk=None):
+        user = request.user
         if pk:
             try:
                 order = Order.objects.get(pk=pk)
@@ -17,8 +18,10 @@ class OrderViewSet(APIView):
                 return Response({"status": "success", "data": serializer.data}, status=status.HTTP_200_OK)
             except Order.DoesNotExist:
                 return Response({"status": "error", "message": "Order not found"}, status=status.HTTP_404_NOT_FOUND)
-
-        orders = Order.objects.all().order_by('-created_on')
+        if user.is_superuser:
+            orders = Order.objects.all().order_by('-created_on')
+        else:
+            orders = Order.objects.filter(user_id=user).order_by('-created_on')
         serializer = OrderSerializer(orders, many=True)
         return Response({"status": "success", "data": serializer.data}, status=status.HTTP_200_OK)
 
@@ -49,11 +52,26 @@ class OrderViewSet(APIView):
             return Response({"status": "error", "message": "Order not found"}, status=status.HTTP_404_NOT_FOUND)
 
 
+class PendingOrderViewSet(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+        if user.is_superuser:
+            orders = Order.objects.filter(order_status='pending').order_by('-created_on')
+            pending_orders = Order.objects.filter(order_status='pending').order_by('-created_on').count()
+        else:
+            orders = Order.objects.filter(order_status='pending',user_id=user).order_by('-created_on')
+            pending_orders = Order.objects.filter(order_status='pending',user_id=user).order_by('-created_on').count()
+        serializer = OrderSerializer(orders, many=True)
+        return Response({"status": "success",'total':pending_orders, "data": serializer.data}, status=status.HTTP_200_OK)
+
 
 class OrderItemViewSet(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, pk=None):
+        user = request.user
         if pk:
             try:
                 order_item = OrderItem.objects.get(pk=pk)
@@ -61,8 +79,12 @@ class OrderItemViewSet(APIView):
                 return Response({"status": "success", "data": serializer.data}, status=status.HTTP_200_OK)
             except OrderItem.DoesNotExist:
                 return Response({"status": "error", "message": "Order item not found"}, status=status.HTTP_404_NOT_FOUND)
+        if user.is_superuser:
+            order_items = OrderItem.objects.all().order_by('-created_on')
+        else:
+            order_items = OrderItem.objects.filter(user_id=user).order_by('-created_on')
 
-        order_items = OrderItem.objects.all().order_by('-created_on')
+        
         serializer = OrderItemSerializer(order_items, many=True)
         return Response({"status": "success", "data": serializer.data}, status=status.HTTP_200_OK)
 
