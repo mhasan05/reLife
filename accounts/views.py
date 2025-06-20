@@ -27,9 +27,6 @@ class LoginView(APIView):
 
         if user is None:
             return Response({'status': 'error', "message": "Invalid credentials."}, status=status.HTTP_401_UNAUTHORIZED)
-        
-        elif user.is_approved == False:
-            return Response({'status': 'error', "message": "Wait for admin approval."}, status=status.HTTP_401_UNAUTHORIZED)
 
 
         refresh = RefreshToken.for_user(user)

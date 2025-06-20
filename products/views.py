@@ -4,9 +4,6 @@ from rest_framework import status
 from .models import Product,Company,Category
 from .serializers import ProductSerializer,CompanySerializer,CategorySerializer
 from rest_framework.permissions import IsAuthenticated
-from django.db.models import Prefetch
-from django.db.models import Q
-
 
 class ProductView(APIView):
     permission_classes = [IsAuthenticated]
@@ -50,89 +47,6 @@ class ProductView(APIView):
             return Response({"status": "success", "message": "Product deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
         except Product.DoesNotExist:
             return Response({"status": "error", "message": "Product not found"}, status=status.HTTP_404_NOT_FOUND)
-
-
-class CategoryWiseProductView(APIView):
-    permission_classes = [IsAuthenticated]
-
-    def get(self, request, pk=None):
-        """
-        Fetch products by category or group products by all categories.
-        """
-        try:
-            if pk:
-                # Fetch products for a specific category using `category_id`
-                category = Category.objects.get(category_id=pk)  # Use category_id explicitly
-                products = category.products.filter(is_active=True).order_by('-created_on')
-                serializer = ProductSerializer(products, many=True)
-                return Response({
-                    "status": "success",
-                    "category": {
-                        "category_id": category.category_id,
-                        "name": category.name
-                    },
-                    "data": serializer.data
-                }, status=status.HTTP_200_OK)
-
-            # Fetch products grouped by category
-            categories = Category.objects.prefetch_related(
-                Prefetch(
-                    'products',
-                    queryset=Product.objects.filter(is_active=True).order_by('-created_on'),
-                    to_attr='active_products'
-                )
-            )
-
-            result = []
-            for category in categories:
-                if hasattr(category, 'active_products') and category.active_products:
-                    result.append({
-                        "category_id": category.category_id,  # Use category_id explicitly
-                        "category_name": category.name,
-                        "products": ProductSerializer(category.active_products, many=True).data
-                    })
-
-            return Response({"status": "success", "data": result}, status=status.HTTP_200_OK)
-
-        except Category.DoesNotExist:
-            return Response({"status": "error", "message": "Category not found"}, status=status.HTTP_404_NOT_FOUND)
-        except Exception as e:
-            return Response({"status": "error", "message": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-
-class ProductSearchView(APIView):
-    permission_classes = [IsAuthenticated]
-
-    def get(self, request):
-        """
-        Search for products by product name or company name.
-        """
-        query = request.query_params.get('q', '')  # Get the search query from request
-        if not query:
-            return Response(
-                {"status": "error", "message": "Query parameter 'q' is required."},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-
-        try:
-            # Search for products by product name or company name
-            products = Product.objects.filter(
-                Q(product_name__icontains=query) |  # Case-insensitive search for product name
-                Q(company_id__company_name__icontains=query)  # Case-insensitive search for company name
-            ).filter(is_active=True).distinct()
-
-            # Serialize the results
-            serializer = ProductSerializer(products, many=True)
-            return Response(
-                {"status": "success", "query": query, "data": serializer.data},
-                status=status.HTTP_200_OK
-            )
-
-        except Exception as e:
-            return Response(
-                {"status": "error", "message": str(e)},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
 
 
 class CompanyView(APIView):

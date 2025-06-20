@@ -5,10 +5,22 @@ from .models import UserAuth, Area, Address
 
 
 class UserAuthSerializer(serializers.ModelSerializer):
-    area_name = serializers.CharField(source='area.area_name', read_only=True)
     class Meta:
         model = UserAuth
-        fields = ['user_id', 'full_name', 'email', 'phone', 'image', 'shop_name', 'shop_address', 'area','area_name', 'is_approved', 'is_active', 'is_staff', 'is_superuser', 'date_joined', 'created_on', 'updated_on']
+        fields = ['user_id', 'full_name', 'email', 'phone', 'image', 'shop_name', 'shop_address', 'area', 'is_approved', 'is_active', 'is_staff', 'is_superuser', 'date_joined', 'created_on', 'updated_on']
+
+
+
+
+class UserAuthSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = UserAuth
+        fields = [
+            'user_id', 'full_name', 'email', 'phone', 'image', 'shop_name', 'shop_address', 'area', 'is_approved', 'is_active', 'is_staff', 'is_superuser', 'date_joined', 'created_on', 'updated_on'
+        ]
+
+
 
 
 
