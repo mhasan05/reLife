@@ -10,6 +10,9 @@ from django.contrib.auth import authenticate
 from accounts.models import Area
 
 
+class HomeView(APIView):
+    def get(self,request):
+        return Response({'status': 'success',"message": "Welcome to teamerror :)."})
 
 
 class LoginView(APIView):
