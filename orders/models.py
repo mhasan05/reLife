@@ -91,7 +91,7 @@ class OrderItem(models.Model):
 
     def save(self, *args, **kwargs):
         # Ensure unit_price is set to the product's selling price when saving
-        self.unit_price = self.product.selling_price()  # Set the price to the selling price
+        self.unit_price = self.product.selling_price  # Set the price to the selling price
         super().save(*args, **kwargs)
 
 

@@ -26,7 +26,7 @@ SECRET_KEY = 'django-insecure-tgq04$8a96x609mhwsy_1+(*79^t1luo5zi2j4odf=n!)@m60u
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 AUTH_USER_MODEL = 'accounts.UserAuth'
 
@@ -40,9 +40,10 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
-    'accounts',  # Custom user app
-    'products',  # Products app
-    'orders',  # Orders app
+    'accounts',
+    'products',
+    'orders',
+    'notice',
 ]
 
 MIDDLEWARE = [

@@ -1,7 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import AbstractBaseUser,PermissionsMixin
 from django.utils import timezone
-from accounts.manager import UserManager #import from account apps
+from accounts.manager import UserManager
 
 class Area(models.Model):
     class Meta:

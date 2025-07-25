@@ -138,6 +138,17 @@ class CustomerView(APIView):
         customers = UserAuth.objects.all().order_by('-date_joined')
         serializer = UserAuthSerializer(customers, many=True)
         return Response({"status": "success", "data": serializer.data}, status=status.HTTP_200_OK)
+    
+    def patch(self, request, pk=None):
+        try:
+            customer = UserAuth.objects.get(pk=pk)
+            serializer = UserAuthSerializer(customer, data=request.data, partial=True)
+            if serializer.is_valid():
+                serializer.save()
+                return Response({"status": "success", "message": "Customer approved successfully"}, status=status.HTTP_200_OK)
+            return Response({"status": "error", "errors": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+        except UserAuth.DoesNotExist:
+            return Response({"status": "error", "message": "Customer not found"}, status=status.HTTP_404_NOT_FOUND)
 
 
     def delete(self, request, pk=None):
@@ -162,7 +173,13 @@ class UserProfileView(APIView):
         
     def patch(self, request):
         customer = request.user  # Access the current logged-in user
-        serializer = UserAuthSerializer(customer, data=request.data, partial=True)
+        data = request.data.copy()
+        # Only allow admin to change restricted fields
+        restricted_fields = ['is_superuser','is_staff', 'is_active', 'is_approved']
+        if not customer.is_superuser:
+            for field in restricted_fields:
+                data.pop(field, None)
+        serializer = UserAuthSerializer(customer, data=data, partial=True)
         if serializer.is_valid():
             serializer.save()
             return Response({"status": "success", "data": serializer.data}, status=status.HTTP_200_OK)

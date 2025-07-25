@@ -9,10 +9,12 @@ class OrderItemSerializer(serializers.ModelSerializer):
     discount_percent = serializers.CharField(source='product.discount_percent', read_only=True)
     discount = serializers.SerializerMethodField()
     mrp = serializers.CharField(source='product.mrp', read_only=True)
+    selling_price = serializers.CharField(source='product.selling_price', read_only=True)
 
     class Meta:
         model = OrderItem
-        fields = ['product', 'product_name', 'quantity', 'mrp', 'discount_percent','discount', 'items_total']
+        fields = ['id','product', 'product_name', 'quantity', 'mrp','selling_price', 'discount_percent','discount', 'items_total','created_on', 'updated_on']
+        # fields = '__all__'
 
     def validate_quantity(self, value):
         if value == 0:
@@ -28,7 +30,7 @@ class OrderItemSerializer(serializers.ModelSerializer):
         """
         Retrieves the discount amount from the product's discount method.
         """
-        return obj.product.discount() * obj.quantity
+        return (obj.product.mrp - obj.product.selling_price) * obj.quantity
 
 class OrderSerializer(serializers.ModelSerializer):
     items = OrderItemSerializer(many=True)
@@ -37,7 +39,7 @@ class OrderSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Order
-        fields = ['order_id', 'user_id', 'total_amount', 'shipping_address', 'order_status', 'order_date', 'items']
+        fields = ['order_id','invoice_number', 'user_id', 'total_amount', 'shipping_address', 'order_status', 'order_date', 'items']
 
     def create(self, validated_data):
         items_data = validated_data.pop('items', [])

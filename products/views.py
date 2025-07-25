@@ -118,7 +118,8 @@ class ProductSearchView(APIView):
             # Search for products by product name or company name
             products = Product.objects.filter(
                 Q(product_name__icontains=query) |  # Case-insensitive search for product name
-                Q(company_id__company_name__icontains=query)  # Case-insensitive search for company name
+                Q(company_id__company_name__icontains=query) |  # Case-insensitive search for company name
+                Q(generic_name__icontains=query)  # Case-insensitive search for generic name
             ).filter(is_active=True).distinct()
 
             # Serialize the results

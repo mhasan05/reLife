@@ -36,6 +36,7 @@ class Category(models.Model):
 class Product(models.Model):
     product_id = models.BigAutoField(primary_key=True)
     product_name = models.CharField(max_length=255)
+    generic_name = models.CharField(max_length=255, blank=True, null=True)  # Optional field for generic name
     product_description = models.TextField(blank=True, null=True)
     product_image = models.ImageField(upload_to='product_images/')
     sku = models.CharField(max_length=100, unique=True, editable=False)
@@ -45,6 +46,7 @@ class Product(models.Model):
     discount_percent = models.PositiveIntegerField(default=0)  # Percentage discount (0-100)
     cost_price = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)  # Base price before discount
     mrp = models.DecimalField(max_digits=10, decimal_places=2)  # Maximum Retail Price
+    selling_price = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)  # Final price after discount
     out_of_stock = models.BooleanField(default=False)
     is_active = models.BooleanField(default=True)
     created_on = models.DateTimeField(auto_now_add=True)
@@ -64,29 +66,21 @@ class Product(models.Model):
             self.sku = self.generate_unique_sku()
         super().save(*args, **kwargs)
 
-    @staticmethod
-    def generate_unique_sku():
-        """
-        Generates a unique SKU using UUID and ensures it is unique within the database.
-        """
-        while True:
+    
+
+    def save(self, *args, **kwargs):
+    # Generate SKU if not present
+        if not self.sku:
             new_sku = str(uuid.uuid4()).split('-')[0].upper()  # Generate a short unique string
             if not Product.objects.filter(sku=new_sku).exists():
-                return new_sku
+                self.sku = new_sku
 
-    def discount(self):
-        """
-        Returns the price after applying the percentage discount.
-        """
-        discount_amount = (self.mrp * self.discount_percent) / 100
-        return discount_amount
+        # Auto-calculate discount percentage
+        if self.mrp and self.selling_price and self.mrp > 0:
+            self.discount_percent = round(((self.mrp - self.selling_price) / self.mrp) * 100)
 
-    def selling_price(self):
-        """
-        Returns the final price (used in templates or views).
-        """
-        discount_amount = (self.mrp * self.discount_percent) / 100
-        return self.mrp - discount_amount
+        super().save(*args, **kwargs)
+
 
 
 
