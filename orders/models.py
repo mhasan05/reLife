@@ -17,7 +17,7 @@ class Order(models.Model):
     )
 
     order_id = models.BigAutoField(primary_key=True)
-    invoice_number = models.CharField(max_length=20, unique=True)  # Unique invoice number for the order
+    invoice_number = models.CharField(max_length=20, unique=True,null=True, blank=True)  # Unique invoice number for the order
     user_id = models.ForeignKey(UserAuth, on_delete=models.CASCADE)  # Link to User model
     total_amount = models.DecimalField(max_digits=12, decimal_places=2, default=0)  # Total price of the order
     shipping_address = models.CharField(max_length=255,null=True, blank=True)  # Shipping address for the order

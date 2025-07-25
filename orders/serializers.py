@@ -54,6 +54,17 @@ class OrderSerializer(serializers.ModelSerializer):
         # Create order items and calculate total
         total_amount = 0
         for item_data in items_data:
+            product = Product.objects.select_for_update().get(pk=item_data['product'].pk)
+            quantity = item_data['quantity']
+
+            if product.stock_quantity < quantity:
+                raise serializers.ValidationError({
+                    'product': f"Not enough stock for {product.product_name}."
+                })
+
+            product.stock_quantity -= quantity
+            product.save()
+            
             order_item = OrderItem.objects.create(order=order, **item_data)
             total_amount += order_item.items_total()
 

@@ -40,6 +40,7 @@ class Product(models.Model):
     product_description = models.TextField(blank=True, null=True)
     product_image = models.ImageField(upload_to='product_images/')
     sku = models.CharField(max_length=100, unique=True, editable=False)
+    quantity_per_box = models.PositiveIntegerField(default=0)
     company_id = models.ForeignKey(Company, on_delete=models.SET_NULL, null=True, blank=True, related_name='company')
     category_id = models.ManyToManyField(Category, related_name='products', blank=True)
     stock_quantity = models.PositiveIntegerField(default=0)

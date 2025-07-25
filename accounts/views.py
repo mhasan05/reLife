@@ -8,7 +8,13 @@ from rest_framework import status
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth import authenticate
 from accounts.models import Area
+from rest_framework.pagination import PageNumberPagination
 
+
+class UserPagination(PageNumberPagination):
+    page_size = 10  # default page size
+    page_size_query_param = 'page_size'  # let client override page size using ?page_size=
+    max_page_size = 1000
 
 class HomeView(APIView):
     def get(self,request):
@@ -125,6 +131,7 @@ class SignupView(APIView):
 
 class CustomerView(APIView):
     permission_classes = [IsAuthenticated]
+    pagination_class = UserPagination()
 
     def get(self, request, pk=None):
         if pk:
@@ -134,11 +141,18 @@ class CustomerView(APIView):
                 return Response({"status": "success", "data": serializer.data}, status=status.HTTP_200_OK)
             except UserAuth.DoesNotExist:
                 return Response({"status": "error", "message": "Customer not found"}, status=status.HTTP_404_NOT_FOUND)
-
+            
+        
+        
         customers = UserAuth.objects.all().order_by('-date_joined')
-        serializer = UserAuthSerializer(customers, many=True)
-        return Response({"status": "success", "data": serializer.data}, status=status.HTTP_200_OK)
-    
+        paginator = self.pagination_class
+        paginated_customers = paginator.paginate_queryset(customers, request)
+        serializer = UserAuthSerializer(paginated_customers, many=True)
+        return paginator.get_paginated_response({
+            "status": "success",
+            "data": serializer.data
+        })
+
     def patch(self, request, pk=None):
         try:
             customer = UserAuth.objects.get(pk=pk)
@@ -163,7 +177,7 @@ class CustomerView(APIView):
 class UserProfileView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def get(self, request):
+    def get(self, request, pk=None):
         try:
             user_profile = request.user  # Access the current logged-in user
             serializer = UserAuthSerializer(user_profile)  # Serialize the user data
@@ -171,7 +185,21 @@ class UserProfileView(APIView):
         except UserAuth.DoesNotExist:
             return Response({'status': 'error',"message": "User profile not found."}, status=status.HTTP_404_NOT_FOUND)
         
-    def patch(self, request):
+    def post(self, request, pk=None):
+        user = request.user  # Access the current logged-in user
+        if user.is_superuser:
+            try:
+                customer = UserAuth.objects.get(pk=pk)
+                customer.is_approved = True  # Approve the customer
+                customer.save()
+                serializer = UserAuthSerializer(customer)
+                return Response({"status": "success","message": "Customer approved successfully","data": serializer.data}, status=status.HTTP_200_OK)
+            except UserAuth.DoesNotExist:
+                return Response({"status": "error", "message": "Customer not found"}, status=status.HTTP_404_NOT_FOUND)
+        else:
+            return Response({"status": "error", "message": "You are not authorized to approve users."}, status=status.HTTP_403_FORBIDDEN)
+
+    def patch(self, request, pk=None):
         customer = request.user  # Access the current logged-in user
         data = request.data.copy()
         # Only allow admin to change restricted fields

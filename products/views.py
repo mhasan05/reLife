@@ -6,10 +6,19 @@ from .serializers import ProductSerializer,CompanySerializer,CategorySerializer
 from rest_framework.permissions import IsAuthenticated
 from django.db.models import Prefetch
 from django.db.models import Q
+from rest_framework.pagination import PageNumberPagination
+
+
+class ProductPagination(PageNumberPagination):
+    page_size = 10  # default page size
+    page_size_query_param = 'page_size'  # let client override page size using ?page_size=
+    max_page_size = 500
+
 
 
 class ProductView(APIView):
     permission_classes = [IsAuthenticated]
+    pagination_class = ProductPagination()
 
     def get(self, request, pk=None):
         if pk:
@@ -22,8 +31,17 @@ class ProductView(APIView):
 
         products = Product.objects.filter(is_active=True).order_by('-created_on')
         total_products = Product.objects.filter(is_active=True).count()
-        serializer = ProductSerializer(products, many=True)
-        return Response({"status": "success", "total_products": total_products, "data": serializer.data}, status=status.HTTP_200_OK)
+        # Apply pagination
+        paginator = self.pagination_class
+        paginated_products = paginator.paginate_queryset(products, request)
+
+        serializer = ProductSerializer(paginated_products, many=True)
+        # Return paginated response
+        return paginator.get_paginated_response({
+            "status": "success",
+            "total_products": total_products,
+            "data": serializer.data
+        })
 
     def post(self, request):
         serializer = ProductSerializer(data=request.data)

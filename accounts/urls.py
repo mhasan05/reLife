@@ -8,6 +8,7 @@ urlpatterns = [
     path('admin_login/', AdminLoginView.as_view(), name='admin_login'),
 
     path('user_profile/', UserProfileView.as_view(), name='user_profile'),
+    path('user_approved/<int:pk>/', UserProfileView.as_view(), name='user_approved'),
     path('user/', CustomerView.as_view(), name='user_list'),
     path('user/<int:pk>/', CustomerView.as_view(), name='user_detail'),
 

@@ -5,9 +5,17 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.pagination import PageNumberPagination
+
+
+class OrderPagination(PageNumberPagination):
+    page_size = 10  # default page size
+    page_size_query_param = 'page_size'  # let client override page size using ?page_size=
+    max_page_size = 500
 
 class OrderViewSet(APIView):
     permission_classes = [IsAuthenticated]
+    pagination_class = OrderPagination()
 
     def get(self, request, pk=None):
         user = request.user
@@ -22,8 +30,14 @@ class OrderViewSet(APIView):
             orders = Order.objects.all().order_by('-created_on')
         else:
             orders = Order.objects.filter(user_id=user).order_by('-created_on')
-        serializer = OrderSerializer(orders, many=True)
-        return Response({"status": "success", "data": serializer.data}, status=status.HTTP_200_OK)
+        # Apply pagination
+        paginator = self.pagination_class
+        paginated_orders = paginator.paginate_queryset(orders, request)
+        serializer = OrderSerializer(paginated_orders, many=True)
+        return paginator.get_paginated_response({
+            "status": "success",
+            "data": serializer.data
+        })
 
     def post(self, request):
         serializer = OrderSerializer(data=request.data)

@@ -10,7 +10,7 @@ class CategoryAdmin(admin.ModelAdmin):
 
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
-    list_display = ['product_name', 'get_categories', 'company_id', 'mrp', 'stock_quantity', 'is_active']
+    list_display = ['product_name', 'get_categories', 'company_id','quantity_per_box', 'mrp', 'stock_quantity', 'is_active']
     list_filter = ['company_id', 'is_active']
     search_fields = ['product_name', 'sku']
 
