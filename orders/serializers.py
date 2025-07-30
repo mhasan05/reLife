@@ -6,10 +6,10 @@ from accounts.models import UserAuth
 
 class OrderItemSerializer(serializers.ModelSerializer):
     product_name = serializers.CharField(source='product.product_name', read_only=True)
-    discount_percent = serializers.CharField(source='product.discount_percent', read_only=True)
+    discount_percent = serializers.FloatField(source='product.discount_percent', read_only=True)
     discount = serializers.SerializerMethodField()
-    mrp = serializers.CharField(source='product.mrp', read_only=True)
-    selling_price = serializers.CharField(source='product.selling_price', read_only=True)
+    mrp = serializers.FloatField(source='product.mrp', read_only=True)
+    selling_price = serializers.FloatField(source='product.selling_price', read_only=True)
 
     class Meta:
         model = OrderItem
@@ -33,13 +33,15 @@ class OrderItemSerializer(serializers.ModelSerializer):
         return (obj.product.mrp - obj.product.selling_price) * obj.quantity
 
 class OrderSerializer(serializers.ModelSerializer):
+    delivery_charge = serializers.FloatField()  # force as number
     items = OrderItemSerializer(many=True)
     total_amount = serializers.SerializerMethodField()
+    final_amount = serializers.SerializerMethodField()  # New field
     shipping_address = serializers.CharField(required=False, allow_blank=True)
 
     class Meta:
         model = Order
-        fields = ['order_id','invoice_number', 'user_id', 'total_amount', 'shipping_address', 'order_status', 'order_date', 'items']
+        fields = ['order_id','invoice_number', 'user_id', 'total_amount','delivery_charge','final_amount', 'shipping_address', 'order_status', 'order_date', 'items']
 
     def create(self, validated_data):
         items_data = validated_data.pop('items', [])
@@ -101,6 +103,8 @@ class OrderSerializer(serializers.ModelSerializer):
     def get_total_amount(self, obj):
         # Sum the total for all related OrderItems
         return sum(item.items_total() for item in obj.items.all())
+    def get_final_amount(self, obj):
+        return float(obj.total_amount) + float(obj.delivery_charge)
     def get_shipping_address(self, obj):
         return obj.user_id.shop_address if obj.user_id and obj.user_id.shop_address else None
 

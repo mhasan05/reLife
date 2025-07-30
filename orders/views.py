@@ -6,6 +6,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.pagination import PageNumberPagination
+from settings.models import SiteInfoModel
 
 
 class OrderPagination(PageNumberPagination):
@@ -40,7 +41,14 @@ class OrderViewSet(APIView):
         })
 
     def post(self, request):
-        serializer = OrderSerializer(data=request.data)
+        # Get delivery_charge from SiteInfoModel (fallback to 100.0 if not found)
+        site_info = SiteInfoModel.objects.first()
+        delivery_charge = site_info.delivery_charge if site_info else 100.0
+
+        # Add delivery_charge to the request data before serialization
+        data = request.data.copy()
+        data['delivery_charge'] = delivery_charge
+        serializer = OrderSerializer(data=data)
         if serializer.is_valid():
             serializer.save()
             return Response({"status": "success", "data": serializer.data}, status=status.HTTP_201_CREATED)

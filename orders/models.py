@@ -20,6 +20,7 @@ class Order(models.Model):
     invoice_number = models.CharField(max_length=20, unique=True,null=True, blank=True)  # Unique invoice number for the order
     user_id = models.ForeignKey(UserAuth, on_delete=models.CASCADE)  # Link to User model
     total_amount = models.DecimalField(max_digits=12, decimal_places=2, default=0)  # Total price of the order
+    delivery_charge = models.DecimalField(max_digits=10, decimal_places=1, default=80.0)  # Delivery charge for the order
     shipping_address = models.CharField(max_length=255,null=True, blank=True)  # Shipping address for the order
     order_date = models.DateTimeField(default=timezone.now)
     order_status = models.CharField(max_length=10, choices=ORDER_STATUS_CHOICES, default='pending')
