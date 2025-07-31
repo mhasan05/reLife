@@ -54,17 +54,6 @@ class Order(models.Model):
         super().save(*args, **kwargs)
 
 
-# # Signal to calculate total_amount after order is saved
-# @receiver(post_save, sender=Order)
-# def update_total_amount(sender, instance, **kwargs):
-#     """
-#     Updates the total amount of the order after it has been saved.
-#     """
-#     order_items = instance.items.all()  # Access related order items
-#     total_price = sum([item.get_item_total() for item in order_items])
-#     if instance.total_amount != total_price:
-#         instance.total_amount = total_price
-#         instance.save()
 
 
 
