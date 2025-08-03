@@ -7,6 +7,7 @@ from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.pagination import PageNumberPagination
 from settings.models import SiteInfoModel
+from notification.models import Notification
 
 
 class OrderPagination(PageNumberPagination):
@@ -57,6 +58,14 @@ class OrderViewSet(APIView):
     def patch(self, request, pk=None):
         try:
             order = Order.objects.get(pk=pk)
+            customer = order.user_id
+            if 'order_status' in request.data:
+                # If status is being updated, create a notification
+                Notification.objects.create(
+                    title ='Order Update',
+                    user=customer,
+                    message=f"Your order {order.invoice_number} has been {request.data['order_status']}"
+                )
             serializer = OrderSerializer(order, data=request.data, partial=True)
             if serializer.is_valid():
                 serializer.save()

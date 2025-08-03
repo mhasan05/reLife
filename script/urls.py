@@ -23,7 +23,7 @@ urlpatterns = [
     path('products/', include('products.urls')),
     path('orders/', include('orders.urls')),
     path('announcement/', include('notice.urls')),
-    path('', include('accounts.urls')),
     path('settings/', include('settings.urls')),
     path('dashboard/', include('dashboard.urls')),
+    path('user/', include('notification.urls')),
 ]
