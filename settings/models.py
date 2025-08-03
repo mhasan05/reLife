@@ -3,6 +3,7 @@ from django.db import models
 # Create your models here.
 class SiteInfoModel(models.Model):
     name = models.CharField(max_length=100, default='BDM')
+    logo = models.ImageField(upload_to='logos/', default='logos/logo.png')
     version = models.CharField(max_length=10, default='1.0')
     description = models.TextField(default='A platform for managing orders.')
     delivery_charge = models.DecimalField(max_digits=10, decimal_places=1, default=80.0)

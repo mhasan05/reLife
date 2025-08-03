@@ -29,6 +29,11 @@ DEBUG = True
 ALLOWED_HOSTS = ['*']
 
 AUTH_USER_MODEL = 'accounts.UserAuth'
+# settings.py
+AUTHENTICATION_BACKENDS = [
+    'accounts.backends.EmailOrPhoneBackend',
+]
+
 
 # Application definition
 
