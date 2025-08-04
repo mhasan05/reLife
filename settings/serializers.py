@@ -6,4 +6,4 @@ class SiteInfoSerializer(serializers.ModelSerializer):
     delivery_charge = serializers.FloatField()  # force as number
     class Meta:
         model = SiteInfoModel
-        fields = ['name', 'description', 'version', 'delivery_charge', 'contact_email', 'contact_phone']
+        fields = ['name', 'logo', 'description', 'version', 'delivery_charge', 'contact_email', 'contact_phone']

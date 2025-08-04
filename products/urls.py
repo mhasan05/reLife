@@ -10,6 +10,7 @@ urlpatterns = [
     path('products/category/<int:pk>/', CategoryWiseProductView.as_view(), name='product_detail_category'),
 
     path('products/search/', ProductSearchView.as_view(), name='product_search'),
+    path('search/by_companies/', CompanyProductSearchView.as_view(), name='company_product_search'),
 
     path('companies/', CompanyView.as_view(), name='company_list'),
     path('companies/<int:pk>/', CompanyView.as_view(), name='company_detail'),

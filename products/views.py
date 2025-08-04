@@ -154,6 +154,63 @@ class ProductSearchView(APIView):
             )
 
 
+class CompanyProductSearchView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        """
+        Search for products by multiple company names (partial match).
+        """
+        company_names_param = request.query_params.get('company_names', '')
+        if not company_names_param:
+            return Response(
+                {"status": "error", "message": "Query parameter 'company_names' is required (comma-separated)."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        company_names = [name.strip() for name in company_names_param.split(',') if name.strip()]
+        if not company_names:
+            return Response(
+                {"status": "error", "message": "No valid company names provided."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            # Partial match (case-insensitive) for multiple names
+            from functools import reduce
+            from operator import or_
+            filters = reduce(or_, [Q(company_name__icontains=name) for name in company_names])
+            companies = Company.objects.filter(filters)
+
+            if not companies.exists():
+                return Response(
+                    {"status": "success", "message": "No companies found.", "data": []},
+                    status=status.HTTP_200_OK
+                )
+
+            products = Product.objects.filter(
+                company_id__in=companies,
+                is_active=True
+            ).distinct()
+
+            serializer = ProductSerializer(products, many=True)
+            return Response(
+                {
+                    "status": "success",
+                    "selected_companies": company_names,
+                    "total_products": products.count(),
+                    "data": serializer.data
+                },
+                status=status.HTTP_200_OK
+            )
+
+        except Exception as e:
+            return Response(
+                {"status": "error", "message": str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+
 class CompanyView(APIView):
     permission_classes = [IsAuthenticated]
 
