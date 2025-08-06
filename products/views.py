@@ -298,3 +298,44 @@ class CategoryView(APIView):
             return Response({"status": "success", "message": "Category deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
         except Category.DoesNotExist:
             return Response({"status": "error", "message": "Category not found"}, status=status.HTTP_404_NOT_FOUND)
+        
+
+
+
+
+from .models import BannerImages
+from .serializers import *
+from django.shortcuts import get_object_or_404
+
+class BannerImagesListCreateView(APIView):
+    def get(self, request):
+        banners = BannerImages.objects.all().order_by('-created_on')
+        serializer = BannerImageSerializer(banners, many=True)
+        return Response({'status':'success','data':serializer.data}, status=status.HTTP_200_OK)
+
+    def post(self, request):
+        serializer = BannerImageSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({'status':'success','data':serializer.data}, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class BannerImagesDetailView(APIView):
+    def get(self, request, pk):
+        banner = get_object_or_404(BannerImages, pk=pk)
+        serializer = BannerImageSerializer(banner)
+        return Response({'status':'success','data':serializer.data},status=status.HTTP_200_OK)
+
+    def patch(self, request, pk):
+        banner = get_object_or_404(BannerImages, pk=pk)
+        serializer = BannerImageSerializer(banner, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({'status':'success','data':serializer.data})
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request, pk):
+        banner = get_object_or_404(BannerImages, pk=pk)
+        banner.delete()
+        return Response({'status':'success','message':'successfully delete'},status=status.HTTP_200_OK)

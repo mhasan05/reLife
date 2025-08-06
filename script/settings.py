@@ -32,6 +32,7 @@ AUTH_USER_MODEL = 'accounts.UserAuth'
 # settings.py
 AUTHENTICATION_BACKENDS = [
     'accounts.backends.EmailOrPhoneBackend',
+    'django.contrib.auth.backends.ModelBackend',  # default for admin
 ]
 
 

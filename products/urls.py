@@ -17,5 +17,9 @@ urlpatterns = [
 
     path('categories/', CategoryView.as_view(), name='category_list'),
     path('categories/<int:pk>/', CategoryView.as_view(), name='category_detail'),
+
+
+    path('banners/', BannerImagesListCreateView.as_view(), name='banner-list-create'),
+    path('banners/<int:pk>/', BannerImagesDetailView.as_view(), name='banner-detail'),
 ]
 

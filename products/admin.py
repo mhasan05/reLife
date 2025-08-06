@@ -1,7 +1,8 @@
 from django.contrib import admin
-from .models import Company,Product,Category
+from .models import *
 # Register your models here.
 admin.site.register(Company)
+admin.site.register(BannerImages)
 
 @admin.register(Category)
 class CategoryAdmin(admin.ModelAdmin):
