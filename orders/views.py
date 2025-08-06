@@ -7,7 +7,7 @@ from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.pagination import PageNumberPagination
 from settings.models import SiteInfoModel
-from notification.models import Notification
+from notification.models import *
 
 
 class OrderPagination(PageNumberPagination):
@@ -52,6 +52,13 @@ class OrderViewSet(APIView):
         serializer = OrderSerializer(data=data)
         if serializer.is_valid():
             serializer.save()
+            # Create a notification for the admin
+            admin_notification = AdminNotification.objects.create(
+                user=request.user,
+                title='New Order Created',
+                order_id=serializer.instance,
+                message=f"{request.user.full_name} has created a new order."
+            )
             return Response({"status": "success", "data": serializer.data}, status=status.HTTP_201_CREATED)
         return Response({"status": "error", "errors": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
