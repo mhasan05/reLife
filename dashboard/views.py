@@ -46,17 +46,16 @@ class DashboardInfoView(APIView):
             orderitem__order__order_date__lt=end_of_month
         ).annotate(
             total_quantity_sold=Sum('orderitem__quantity')
-        ).order_by('-total_quantity_sold').first()
+        ).order_by('-total_quantity_sold')[:5]
 
         # Serialize the result
-        if top_product:
-            top_selling_product = {
-                "product_id": top_product.product_id,
-                "product_name": top_product.product_name,
-                "total_quantity_sold": top_product.total_quantity_sold or 0
-            }
-        else:
-            top_selling_product = None
+        top_selling_products = []
+        for product in top_product:
+            top_selling_products.append({
+                "product_id": product.product_id,
+                "product_name": product.product_name,
+                "total_quantity_sold": product.total_quantity_sold or 0
+            })
 
         # Profit expression: (selling_price - cost_price) * quantity
         profit_expr = ExpressionWrapper(
@@ -130,7 +129,7 @@ class DashboardInfoView(APIView):
             "total_sales": total_sales,
             "total_delivery_cost": total_delivery_cost,
             "monthly_revenue": monthly_revenue,
-            "top_selling_product": top_selling_product,
+            "top_selling_product": top_selling_products,
             "sales_by_month": report,
             "profit_by_month": data
 
