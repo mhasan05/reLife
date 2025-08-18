@@ -88,45 +88,17 @@ class OrderItem(models.Model):
 
 
 
-class Return(models.Model):
-    RETURN_STATUS_CHOICES = (
-        ('pending', 'Pending'),
-        ('approved', 'Approved'),
-        ('rejected', 'Rejected'),
-        ('completed', 'Completed'),
-    )
-
-    return_id = models.BigAutoField(primary_key=True)
-    order_item = models.ForeignKey(OrderItem, on_delete=models.CASCADE, related_name='returns')  # Link to OrderItem
-    quantity = models.PositiveIntegerField()  # Quantity being returned
-    reason = models.TextField(blank=True, null=True)  # Optional reason for return
-    status = models.CharField(max_length=10, choices=RETURN_STATUS_CHOICES, default='pending')  # Return status
+class ReturnItem(models.Model):
+    order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='return_items')
+    product = models.ForeignKey(Product, on_delete=models.PROTECT)
+    quantity = models.PositiveIntegerField(default=1)
+    reason = models.TextField(blank=True, null=True)  # why the item was returned
     created_on = models.DateTimeField(auto_now_add=True)
-    processed_on = models.DateTimeField(blank=True, null=True)
-    processed_by = models.CharField(max_length=100, blank=True, null=True)  # Admin or staff who processed the return
+    updated_on = models.DateTimeField(auto_now=True)
 
     class Meta:
-        verbose_name_plural = "Returns"
-        ordering = ['-created_on']
+        verbose_name_plural = "Return Items"
 
     def __str__(self):
-        return f"Return {self.return_id} - {self.order_item.product.product_name}"
+        return f"Return {self.quantity} x {self.product.product_name}"
 
-    def is_valid_return(self):
-        """
-        Ensures that the return quantity does not exceed the ordered quantity.
-        """
-        if self.quantity > self.order_item.quantity:
-            return False  # Cannot return more than ordered
-        return True
-
-    def process_return(self):
-        """
-        Handles return processing: updates order item quantity and marks the return as completed.
-        """
-        if self.status == 'approved' and self.is_valid_return():
-            self.order_item.quantity -= self.quantity
-            self.order_item.save()
-            self.status = 'completed'
-            self.processed_on = timezone.now()
-            self.save()

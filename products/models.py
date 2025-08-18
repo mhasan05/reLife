@@ -28,6 +28,22 @@ class Category(models.Model):
 
     def __str__(self):
         return self.name
+    
+
+
+class GenericName(models.Model):
+    generic_id = models.BigAutoField(primary_key=True)
+    name = models.CharField(max_length=100, unique=True)
+    description = models.TextField(blank=True, null=True)
+    created_on = models.DateTimeField(auto_now_add=True)
+    updated_on = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name_plural = "Generic Name"
+        ordering = ['name']
+
+    def __str__(self):
+        return self.name
 
 
 

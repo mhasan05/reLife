@@ -30,12 +30,25 @@ class CompanySerializer(serializers.ModelSerializer):
         model = Product.company_id.field.related_model
         fields = ['company_id', 'company_name', 'logo','is_active', 'created_on', 'updated_on']
 
+class ProductNameSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Product
+        fields = ['product_name']  # only include product_name
+
 class CategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = Product.category_id.field.related_model
         fields = ['category_id', 'name', 'description', 'created_on', 'updated_on']
 
+class GenericNameSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = GenericName
+        fields = ['generic_id', 'name', 'description', 'created_on', 'updated_on']
 
+class ProductNameListSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = GenericName
+        fields = ['name']  # only include name
 class BannerImageSerializer(serializers.ModelSerializer):
     class Meta:
         model = BannerImages

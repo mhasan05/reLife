@@ -69,6 +69,21 @@ class ProductView(APIView):
         except Product.DoesNotExist:
             return Response({"status": "error", "message": "Product not found"}, status=status.HTTP_404_NOT_FOUND)
 
+class ProductNameListView(APIView):
+    def get(self, request):
+        # Get all product names as a list
+        product_names = list(
+            Product.objects.order_by("product_name").values_list("product_name", flat=True)
+        )
+        return Response({"status": "success", "data": product_names}, status=status.HTTP_200_OK)
+    
+class GenericNameListView(APIView):
+    def get(self, request):
+        # Get all product names as a list
+        generic_names = list(
+            GenericName.objects.order_by("name").values_list("name", flat=True)
+        )
+        return Response({"status": "success", "data": generic_names}, status=status.HTTP_200_OK)
 
 class CategoryWiseProductView(APIView):
     permission_classes = [IsAuthenticated]
@@ -298,6 +313,49 @@ class CategoryView(APIView):
             return Response({"status": "success", "message": "Category deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
         except Category.DoesNotExist:
             return Response({"status": "error", "message": "Category not found"}, status=status.HTTP_404_NOT_FOUND)
+        
+class GenericView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, pk=None):
+        if pk:
+            try:
+                generic_name = GenericName.objects.get(pk=pk)
+                serializer = GenericNameSerializer(generic_name)
+                return Response({"status": "success", "data": serializer.data}, status=status.HTTP_200_OK)
+            except GenericName.DoesNotExist:
+                return Response({"status": "error", "message": "Generic Name not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        generic_name = GenericName.objects.all().order_by('name')
+        total_name = GenericName.objects.count()
+        serializer = GenericNameSerializer(generic_name, many=True)
+        return Response({"status": "success", "total_name": total_name, "data": serializer.data}, status=status.HTTP_200_OK)
+
+    def post(self, request):
+        serializer = GenericNameSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({"status": "success", "data": serializer.data}, status=status.HTTP_201_CREATED)
+        return Response({"status": "error", "errors": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+
+    def patch(self, request, pk=None):
+        try:
+            generic_name = GenericName.objects.get(pk=pk)
+            serializer = GenericNameSerializer(generic_name, data=request.data, partial=True)
+            if serializer.is_valid():
+                serializer.save()
+                return Response({"status": "success", "data": serializer.data}, status=status.HTTP_200_OK)
+            return Response({"status": "error", "errors": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+        except GenericName.DoesNotExist:
+            return Response({"status": "error", "message": "Generic Name not found"}, status=status.HTTP_404_NOT_FOUND)
+
+    def delete(self, request, pk=None):
+        try:
+            generic_name = GenericName.objects.get(pk=pk)
+            generic_name.delete()
+            return Response({"status": "success", "message": "Generic Name deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
+        except GenericName.DoesNotExist:
+            return Response({"status": "error", "message": "Generic Name not found"}, status=status.HTTP_404_NOT_FOUND)
         
 
 
