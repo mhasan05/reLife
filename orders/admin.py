@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Order, OrderItem
+from .models import *
 
 class OrderItemInline(admin.TabularInline):
     model = OrderItem
@@ -19,3 +19,5 @@ class OrderAdmin(admin.ModelAdmin):
     get_total_price.short_description = "Total Price"
 
 admin.site.register(Order, OrderAdmin)
+
+admin.site.register(ReturnItem)

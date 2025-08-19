@@ -9,8 +9,4 @@ urlpatterns = [
 
 
     path('pending_order/', PendingOrderViewSet.as_view(), name='pending_order'),
-
-
-    path('return/request/<int:order_item_id>/', ReturnRequestAPIView.as_view(), name='return_request'),
-    path('return/process/<int:return_id>/', ReturnProcessAPIView.as_view(), name='return_process'),
 ]

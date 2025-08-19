@@ -38,25 +38,36 @@ class ReturnItemSerializer(serializers.ModelSerializer):
     selling_price = serializers.DecimalField(source="product.selling_price", max_digits=10, decimal_places=2, read_only=True)
     discount_percent = serializers.DecimalField(source="product.discount_percent", max_digits=5, decimal_places=2, read_only=True)
 
+    total_return = serializers.SerializerMethodField()
+
     class Meta:
         model = ReturnItem
         fields = [
             "id", "product", "product_name", "quantity",
             "mrp", "selling_price", "discount_percent",
-            "reason", "created_on", "updated_on"
+            "reason", "created_on", "updated_on",
+            "total_return",  # 👈 new field
         ]
+
+    def get_total_return(self, obj):
+        if obj.product and obj.product.selling_price is not None:
+            return obj.quantity * obj.product.selling_price
+        return 0
 
 class OrderSerializer(serializers.ModelSerializer):
     delivery_charge = serializers.FloatField()  # force as number
     items = OrderItemSerializer(many=True)
     return_items = ReturnItemSerializer(many=True, read_only=True)
+    total_return_amount = serializers.SerializerMethodField()  # 👈 NEW field
     total_amount = serializers.SerializerMethodField()
     final_amount = serializers.SerializerMethodField()  # New field
     shipping_address = serializers.CharField(required=False, allow_blank=True)
 
     class Meta:
         model = Order
-        fields = ['order_id','invoice_number', 'user_id', 'total_amount','delivery_charge','final_amount', 'shipping_address', 'order_status', 'order_date', 'items', "return_items"]
+        fields = ['order_id','invoice_number', 'user_id', 'total_amount','delivery_charge','final_amount','total_return_amount', 'shipping_address', 'order_status', 'order_date', 'items', "return_items"]
+
+    
 
     def create(self, validated_data):
         items_data = validated_data.pop('items', [])
@@ -114,12 +125,21 @@ class OrderSerializer(serializers.ModelSerializer):
             order.save()
 
         return order
+    
 
     def get_total_amount(self, obj):
         # Sum the total for all related OrderItems
         return sum(item.items_total() for item in obj.items.all())
     def get_final_amount(self, obj):
         return float(obj.total_amount) + float(obj.delivery_charge)
+    
+    def get_total_return_amount(self, obj):
+        """Sum of all return item amounts"""
+        total = 0
+        for item in obj.return_items.all():
+            total += float(item.quantity) * float(item.product.selling_price)
+        return total
+    
     def get_shipping_address(self, obj):
         return obj.user_id.shop_address if obj.user_id and obj.user_id.shop_address else None
 

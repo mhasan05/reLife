@@ -52,7 +52,13 @@ class GenericName(models.Model):
 class Product(models.Model):
     product_id = models.BigAutoField(primary_key=True)
     product_name = models.CharField(max_length=255)
-    generic_name = models.CharField(max_length=255, blank=True, null=True)  # Optional field for generic name
+    generic_name = models.ForeignKey(
+        GenericName, 
+        on_delete=models.SET_NULL,  # or CASCADE depending on your needs
+        blank=True, 
+        null=True,
+        related_name='products'
+    )
     product_description = models.TextField(blank=True, null=True)
     product_image = models.ImageField(upload_to='product_images/')
     sku = models.CharField(max_length=100, unique=True, editable=False)

@@ -7,6 +7,8 @@ from rest_framework.permissions import IsAuthenticated
 from django.db.models import Prefetch
 from django.db.models import Q
 from rest_framework.pagination import PageNumberPagination
+from functools import reduce
+from operator import or_
 
 
 class ProductPagination(PageNumberPagination):
@@ -150,9 +152,7 @@ class ProductSearchView(APIView):
         try:
             # Search for products by product name or company name
             products = Product.objects.filter(
-                Q(product_name__icontains=query) |  # Case-insensitive search for product name
-                Q(company_id__company_name__icontains=query) |  # Case-insensitive search for company name
-                Q(generic_name__icontains=query)  # Case-insensitive search for generic name
+                Q(product_name__icontains=query)
             ).filter(is_active=True).distinct()
 
             # Serialize the results
@@ -225,6 +225,61 @@ class CompanyProductSearchView(APIView):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
+
+
+class GenericNameProductSearchView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        """
+        Search for products by multiple generic names (partial match).
+        """
+        generic_names_param = request.query_params.get('generic_names', '')
+        if not generic_names_param:
+            return Response(
+                {"status": "error", "message": "Query parameter 'generic_names' is required (comma-separated)."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        generic_names = [name.strip() for name in generic_names_param.split(',') if name.strip()]
+        if not generic_names:
+            return Response(
+                {"status": "error", "message": "No valid generic names provided."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            # Partial match (case-insensitive) for multiple generic names
+            filters = reduce(or_, [Q(name__icontains=name) for name in generic_names])
+            generics = GenericName.objects.filter(filters)
+
+            if not generics.exists():
+                return Response(
+                    {"status": "success", "message": "No generic names found.", "data": []},
+                    status=status.HTTP_200_OK
+                )
+
+            products = Product.objects.filter(
+                generic_name__in=generics,
+                is_active=True
+            ).distinct()
+
+            serializer = ProductSerializer(products, many=True)
+            return Response(
+                {
+                    "status": "success",
+                    "selected_generic_names": generic_names,
+                    "total_products": products.count(),
+                    "data": serializer.data
+                },
+                status=status.HTTP_200_OK
+            )
+
+        except Exception as e:
+            return Response(
+                {"status": "error", "message": str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
 class CompanyView(APIView):
     permission_classes = [IsAuthenticated]

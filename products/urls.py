@@ -13,6 +13,7 @@ urlpatterns = [
 
     path('products/search/', ProductSearchView.as_view(), name='product_search'),
     path('search/by_companies/', CompanyProductSearchView.as_view(), name='company_product_search'),
+    path('search/by_generic_name/', GenericNameProductSearchView.as_view(), name='generic_name_wise_product_search'),
 
     path('companies/', CompanyView.as_view(), name='company_list'),
     path('companies/<int:pk>/', CompanyView.as_view(), name='company_detail'),
