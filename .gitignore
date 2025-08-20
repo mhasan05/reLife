@@ -1,2 +1,14 @@
+# Python compiled files
+*.pyc
+__pycache__/
+
+
+# Virtual environment
 venv/
-.env
+env/
+
+# Django stuff
+*.log
+*.sqlite3
+media/
+staticfiles/
