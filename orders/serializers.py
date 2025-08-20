@@ -34,10 +34,9 @@ class OrderItemSerializer(serializers.ModelSerializer):
     
 class ReturnItemSerializer(serializers.ModelSerializer):
     product_name = serializers.CharField(source="product.product_name", read_only=True)
-    mrp = serializers.DecimalField(source="product.mrp", max_digits=10, decimal_places=2, read_only=True)
-    selling_price = serializers.DecimalField(source="product.selling_price", max_digits=10, decimal_places=2, read_only=True)
-    discount_percent = serializers.DecimalField(source="product.discount_percent", max_digits=5, decimal_places=2, read_only=True)
-
+    mrp = serializers.SerializerMethodField()
+    selling_price = serializers.SerializerMethodField()
+    discount_percent = serializers.SerializerMethodField()
     total_return = serializers.SerializerMethodField()
 
     class Meta:
@@ -46,37 +45,75 @@ class ReturnItemSerializer(serializers.ModelSerializer):
             "id", "product", "product_name", "quantity",
             "mrp", "selling_price", "discount_percent",
             "reason", "created_on", "updated_on",
-            "total_return",  # 👈 new field
+            "total_return",
         ]
 
+    def get_mrp(self, obj):
+        return float(obj.product.mrp) if obj.product else 0.0
+
+    def get_selling_price(self, obj):
+        return float(obj.product.selling_price) if obj.product else 0.0
+
+    def get_discount_percent(self, obj):
+        return float(obj.product.discount_percent) if obj.product else 0.0
+
     def get_total_return(self, obj):
-        if obj.product and obj.product.selling_price is not None:
-            return obj.quantity * obj.product.selling_price
-        return 0
+        return float(obj.quantity * obj.product.selling_price) if obj.product else 0.0
+
 
 class OrderSerializer(serializers.ModelSerializer):
-    delivery_charge = serializers.FloatField()  # force as number
+    delivery_charge = serializers.FloatField()  # ensure number
     items = OrderItemSerializer(many=True)
     return_items = ReturnItemSerializer(many=True, read_only=True)
-    total_return_amount = serializers.SerializerMethodField()  # 👈 NEW field
+    total_return_amount = serializers.SerializerMethodField()  # NEW field
     total_amount = serializers.SerializerMethodField()
-    final_amount = serializers.SerializerMethodField()  # New field
+    final_amount = serializers.SerializerMethodField()
     shipping_address = serializers.CharField(required=False, allow_blank=True)
 
     class Meta:
         model = Order
-        fields = ['order_id','invoice_number', 'user_id', 'total_amount','delivery_charge','final_amount','total_return_amount', 'shipping_address', 'order_status', 'order_date', 'items', "return_items"]
+        fields = [
+            'order_id', 'invoice_number', 'user_id',
+            'total_amount', 'delivery_charge', 'final_amount',
+            'total_return_amount', 'shipping_address',
+            'order_status', 'order_date', 'items', 'return_items'
+        ]
 
-    
+    # --------------------
+    # Calculate total return amount
+    # --------------------
+    def get_total_return_amount(self, obj):
+        total = 0.0
+        for item in obj.return_items.all():  # related_name in ReturnItem
+            if item.product and item.product.selling_price is not None:
+                total += float(item.quantity * item.product.selling_price)
+        return total
 
+    # --------------------
+    # Calculate total amount from order items
+    # --------------------
+    def get_total_amount(self, obj):
+        total = sum([item.items_total() for item in obj.items.all()])
+        return float(total)
+
+    # --------------------
+    # Final amount including delivery
+    # --------------------
+    def get_final_amount(self, obj):
+        return self.get_total_amount(obj) + float(obj.delivery_charge or 0.0)
+
+    # --------------------
+    # Create order with items
+    # --------------------
     def create(self, validated_data):
         items_data = validated_data.pop('items', [])
 
+        # Set shipping_address from user if available
         user = validated_data.get('user_id')
         if user and hasattr(user, 'shop_address'):
             validated_data['shipping_address'] = user.shop_address
 
-        # Temporarily create order without total_amount
+        # Temporarily create order
         order = Order.objects.create(**validated_data)
 
         # Create order items and calculate total
@@ -92,14 +129,12 @@ class OrderSerializer(serializers.ModelSerializer):
 
             product.stock_quantity -= quantity
             product.save()
-            
+
             order_item = OrderItem.objects.create(order=order, **item_data)
             total_amount += order_item.items_total()
 
-        # Update total_amount and save order
         order.total_amount = total_amount
         order.save()
-
         return order
     
     def update(self, instance, validated_data):
