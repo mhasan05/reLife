@@ -4,6 +4,7 @@ from .models import *
 admin.site.register(Company)
 admin.site.register(BannerImages)
 admin.site.register(GenericName)
+admin.site.register(TempProduct)
 
 @admin.register(Category)
 class CategoryAdmin(admin.ModelAdmin):

@@ -30,5 +30,12 @@ urlpatterns = [
 
     path('banners/', BannerImagesListCreateView.as_view(), name='banner-list-create'),
     path('banners/<int:pk>/', BannerImagesDetailView.as_view(), name='banner-detail'),
+
+
+    path("batch/add/", AddProductToBatch.as_view(), name="add-to-batch"),
+    path("batch/<uuid:batch_id>/summary/", BatchSummary.as_view(), name="batch-summary"),
+    path("batch/<uuid:batch_id>/confirm/", ConfirmBatch.as_view(), name="confirm-batch"),
+    path("batch/<uuid:batch_id>/cancel/", CancelBatch.as_view(), name="cancel-batch"),
+    
 ]
 

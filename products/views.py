@@ -452,3 +452,102 @@ class BannerImagesDetailView(APIView):
         banner = get_object_or_404(BannerImages, pk=pk)
         banner.delete()
         return Response({'status':'success','message':'successfully delete'},status=status.HTTP_200_OK)
+
+
+class AddProductToBatch(APIView):
+    def post(self, request):
+        product_id = request.data.get("product_id")
+        new_stock_quantity = request.data.get("new_stock_quantity", 0)
+        new_cost_price = request.data.get("new_cost_price", 0)
+        new_selling_price = request.data.get("new_selling_price", 0)
+        batch_id = request.data.get("batch_id")  # If frontend sends it
+        user = request.user  # assuming request.user is from UserAuth
+
+        # If no batch id sent, create a new one
+        check_batch = TempProduct.objects.filter(is_confirmed=False, user_id=user).first()
+        if check_batch:
+            batch_id = check_batch.batch_id
+        else:
+            batch_id = uuid.uuid4()
+
+        product = get_object_or_404(Product, pk=product_id)
+
+        temp = TempProduct.objects.create(
+            batch_id=batch_id,
+            user_id=user,
+            product_id=product,
+            new_stock_quantity=new_stock_quantity,
+            new_cost_price=new_cost_price,
+            new_selling_price=new_selling_price,
+        )
+
+        return Response(
+            {
+                "message": "Product staged successfully",
+                "batch_id": str(temp.batch_id),
+                "temp_id": temp.id,
+            },
+            status=status.HTTP_201_CREATED,
+        )
+    
+
+
+
+
+
+class BatchSummary(APIView):
+    def get(self, request, batch_id):
+        updates = TempProduct.objects.filter(batch_id=batch_id, user_id=request.user, is_confirmed=False)
+
+        if not updates.exists():
+            return Response({"message": "No products in this batch"}, status=status.HTTP_404_NOT_FOUND)
+
+        total_value = sum([u.total_amount for u in updates])
+        data = [
+            {
+                "id": u.id,
+                "product": u.product_id.product_name,
+                "stock": u.new_stock_quantity,
+                "cost_price": str(u.new_cost_price),
+                "selling_price": str(u.new_selling_price),
+                "total": str(u.total_amount),
+            }
+            for u in updates
+        ]
+        return Response(
+            {
+                "batch_id": batch_id,
+                "products": data,
+                "total_products": updates.count(),
+                "total_value": str(total_value),
+            }
+        )
+
+
+
+
+class ConfirmBatch(APIView):
+    def post(self, request, batch_id):
+        updates = TempProduct.objects.filter(batch_id=batch_id, user_id=request.user, is_confirmed=False)
+
+        if not updates.exists():
+            return Response({"message": "No pending updates for this batch"}, status=status.HTTP_404_NOT_FOUND)
+
+        for update in updates:
+            product = update.product_id
+            product.stock_quantity += update.new_stock_quantity
+            product.cost_price = update.new_cost_price
+            product.selling_price = update.new_selling_price
+            product.save()
+
+            update.is_confirmed = True
+            update.save()
+
+        return Response({"message": f"Batch {batch_id} applied successfully"})
+
+
+
+class CancelBatch(APIView):
+    def post(self, request, batch_id):
+        deleted_count, _ = TempProduct.objects.filter(batch_id=batch_id, user_id=request.user, is_confirmed=False).delete()
+        return Response({"message": f"Batch {batch_id} cancelled. {deleted_count} items removed."})
