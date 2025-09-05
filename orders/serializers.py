@@ -182,3 +182,7 @@ class OrderSerializer(serializers.ModelSerializer):
 
 
 
+class ReturnItemSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ReturnItem
+        fields = '__all__'
