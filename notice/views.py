@@ -8,7 +8,11 @@ from rest_framework.permissions import IsAuthenticated, IsAdminUser
 
 class NoticeListCreateAPIView(APIView):
     def get(self, request):
-        notices = Notice.objects.filter(is_active=True).order_by('-created_at')
+        user = request.user
+        if user.is_superuser:
+            notices = Notice.objects.all().order_by('-created_at')
+        else:
+            notices = Notice.objects.filter(is_active=True).order_by('-created_at')
         serializer = NoticeSerializer(notices, many=True)
         return Response({'status': 'success', 'data': serializer.data})
 

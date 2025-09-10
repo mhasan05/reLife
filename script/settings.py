@@ -102,35 +102,35 @@ WSGI_APPLICATION = 'script.wsgi.application'
 
 
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'elitdakz_bdm',
-        'USER': 'root',
-        'PASSWORD': '',
-        'HOST': '127.0.0.1',
-        'PORT': '3306',
-        'OPTIONS': {
-            'charset': 'utf8mb4',
-        },
-    }
-}
-
-
-
 # DATABASES = {
 #     'default': {
 #         'ENGINE': 'django.db.backends.mysql',
 #         'NAME': 'elitdakz_bdm',
-#         'USER': 'elitdakz_bdm',
-#         'PASSWORD': 'BDMUSER@01',
-#         'HOST': 'localhost',
+#         'USER': 'root',
+#         'PASSWORD': '',
+#         'HOST': '127.0.0.1',
 #         'PORT': '3306',
 #         'OPTIONS': {
 #             'charset': 'utf8mb4',
 #         },
 #     }
 # }
+
+
+
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'elitdakz_bdm',
+        'USER': 'elitdakz_bdm',
+        'PASSWORD': 'BDMUSER@01',
+        'HOST': 'localhost',
+        'PORT': '3306',
+        'OPTIONS': {
+            'charset': 'utf8mb4',
+        },
+    }
+}
 
 
 # Password validation
@@ -194,6 +194,7 @@ REST_FRAMEWORK = {
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",  # React/Vue frontend
     "http://mehedidev.net",  # Production frontend
+    "https://bdm-app-dashboard-iz4z.vercel.app",  # Production frontend
 ]
 CORS_ALLOW_CREDENTIALS = True
 
@@ -208,5 +209,7 @@ SIMPLE_JWT = {
     'AUTH_HEADER_TYPES': ('Bearer',),
 }
 
+FILE_CHARSET = 'utf-8'
+DEFAULT_CHARSET = 'utf-8'
 
 

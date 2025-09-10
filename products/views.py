@@ -31,13 +31,20 @@ class ProductView(APIView):
             except Product.DoesNotExist:
                 return Response({"status": "error", "message": "Product not found"}, status=status.HTTP_404_NOT_FOUND)
 
-        products = Product.objects.filter(is_active=True).order_by('-created_on')
-        total_products = Product.objects.filter(is_active=True).count()
+        user = request.user
+        if user.is_superuser:
+            products = Product.objects.all().order_by('-created_on')
+            total_products = Product.objects.all().count()
+        else:
+            products = Product.objects.filter(is_active=True).order_by('product_name')
+            total_products = Product.objects.filter(is_active=True).count()
+            
+        
         # Apply pagination
         paginator = self.pagination_class
         paginated_products = paginator.paginate_queryset(products, request)
 
-        serializer = ProductSerializer(paginated_products, many=True)
+        serializer = ProductSerializer(products, many=True)
         # Return paginated response
         return paginator.get_paginated_response({
             "status": "success",
@@ -98,7 +105,7 @@ class CategoryWiseProductView(APIView):
             if pk:
                 # Fetch products for a specific category using `category_id`
                 category = Category.objects.get(category_id=pk)  # Use category_id explicitly
-                products = category.products.filter(is_active=True).order_by('-created_on')
+                products = category.products.filter(is_active=True).order_by('product_name')
                 serializer = ProductSerializer(products, many=True)
                 return Response({
                     "status": "success",
@@ -113,18 +120,27 @@ class CategoryWiseProductView(APIView):
             categories = Category.objects.prefetch_related(
                 Prefetch(
                     'products',
-                    queryset=Product.objects.filter(is_active=True).order_by('-created_on'),
+                    queryset=Product.objects.filter(is_active=True).order_by('product_name'),
                     to_attr='active_products'
                 )
             )
+            
+            preferred_order = ["Tablet", "Capsule"]
+
+            # First, categories that match preferred order
+            ordered_categories = sorted(
+                categories,
+                key=lambda c: (preferred_order.index(c.name) if c.name in preferred_order else len(preferred_order), c.name)
+            )
 
             result = []
-            for category in categories:
+            for category in ordered_categories:
                 if hasattr(category, 'active_products') and category.active_products:
                     result.append({
                         "category_id": category.category_id,  # Use category_id explicitly
                         "category_name": category.name,
                         "products": ProductSerializer(category.active_products, many=True).data
+                        # "products": ProductSerializer(category.active_products[:7], many=True).data
                     })
 
             return Response({"status": "success", "data": result}, status=status.HTTP_200_OK)
@@ -293,7 +309,7 @@ class CompanyView(APIView):
             except Company.DoesNotExist:
                 return Response({"status": "error", "message": "Company not found"}, status=status.HTTP_404_NOT_FOUND)
 
-        companies = Company.objects.filter(is_active=True).order_by('-created_on')
+        companies = Company.objects.filter(is_active=True).order_by('company_name')
         total_companies = Company.objects.filter(is_active=True).count()
         serializer = CompanySerializer(companies, many=True)
         return Response({"status": "success", "total_companies": total_companies, "data": serializer.data}, status=status.HTTP_200_OK)

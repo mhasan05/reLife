@@ -20,6 +20,7 @@ class Category(models.Model):
     category_id = models.BigAutoField(primary_key=True)
     name = models.CharField(max_length=100, unique=True)
     description = models.TextField(blank=True, null=True)
+    is_active = models.BooleanField(default=True)
     created_on = models.DateTimeField(auto_now_add=True)
     updated_on = models.DateTimeField(auto_now=True)
 
@@ -66,7 +67,7 @@ class Product(models.Model):
     quantity_per_box = models.PositiveIntegerField(default=0)
     company_id = models.ForeignKey(Company, on_delete=models.SET_NULL, null=True, blank=True, related_name='company')
     category_id = models.ManyToManyField(Category, related_name='products', blank=True)
-    stock_quantity = models.PositiveIntegerField(default=0)
+    stock_quantity = models.IntegerField(default=0)
     discount_percent = models.PositiveIntegerField(default=0)  # Percentage discount (0-100)
     cost_price = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)  # Base price before discount
     mrp = models.DecimalField(max_digits=10, decimal_places=2)  # Maximum Retail Price

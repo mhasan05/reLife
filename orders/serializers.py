@@ -6,6 +6,8 @@ from accounts.models import UserAuth
 
 class OrderItemSerializer(serializers.ModelSerializer):
     product_name = serializers.CharField(source='product.product_name', read_only=True)
+    product_image = serializers.ImageField(source='product.product_image', read_only=True, use_url=True)
+    company_name = serializers.CharField(source='product.company_id', read_only=True)
     discount_percent = serializers.FloatField(source='product.discount_percent', read_only=True)
     discount = serializers.SerializerMethodField()
     mrp = serializers.FloatField(source='product.mrp', read_only=True)
@@ -13,7 +15,7 @@ class OrderItemSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = OrderItem
-        fields = ['id','product', 'product_name', 'quantity', 'mrp','selling_price', 'discount_percent','discount', 'items_total','created_on', 'updated_on']
+        fields = ['id','product', 'product_name','product_image','company_name', 'quantity', 'mrp','selling_price', 'discount_percent','discount', 'items_total','created_on', 'updated_on']
         # fields = '__all__'
 
     def validate_quantity(self, value):
@@ -34,6 +36,8 @@ class OrderItemSerializer(serializers.ModelSerializer):
     
 class ReturnItemSerializer(serializers.ModelSerializer):
     product_name = serializers.CharField(source="product.product_name", read_only=True)
+    product_image = serializers.ImageField(source='product.product_image', read_only=True, use_url=True)
+    company_name = serializers.CharField(source='product.company_id', read_only=True)
     mrp = serializers.SerializerMethodField()
     selling_price = serializers.SerializerMethodField()
     discount_percent = serializers.SerializerMethodField()
@@ -42,7 +46,7 @@ class ReturnItemSerializer(serializers.ModelSerializer):
     class Meta:
         model = ReturnItem
         fields = [
-            "id", "product", "product_name", "quantity",
+            "id", "product", "product_name",'product_image','company_name', "quantity",
             "mrp", "selling_price", "discount_percent",
             "reason", "created_on", "updated_on",
             "total_return",
@@ -69,25 +73,18 @@ class OrderSerializer(serializers.ModelSerializer):
     total_amount = serializers.SerializerMethodField()
     final_amount = serializers.SerializerMethodField()
     shipping_address = serializers.CharField(required=False, allow_blank=True)
+    full_name = serializers.SerializerMethodField()  # NEW
+    shop_name = serializers.SerializerMethodField()  # NEW
 
     class Meta:
         model = Order
         fields = [
-            'order_id', 'invoice_number', 'user_id',
+            'order_id', 'invoice_number', 'user_id','full_name',
             'total_amount', 'delivery_charge', 'final_amount',
-            'total_return_amount', 'shipping_address',
+            'total_return_amount','shop_name', 'shipping_address',
             'order_status', 'order_date', 'items', 'return_items'
         ]
 
-    # --------------------
-    # Calculate total return amount
-    # --------------------
-    def get_total_return_amount(self, obj):
-        total = 0.0
-        for item in obj.return_items.all():  # related_name in ReturnItem
-            if item.product and item.product.selling_price is not None:
-                total += float(item.quantity * item.product.selling_price)
-        return total
 
     # --------------------
     # Calculate total amount from order items
@@ -101,6 +98,12 @@ class OrderSerializer(serializers.ModelSerializer):
     # --------------------
     def get_final_amount(self, obj):
         return self.get_total_amount(obj) + float(obj.delivery_charge or 0.0)
+        
+    def get_full_name(self, obj):
+        return obj.user_id.full_name if obj.user_id else None
+        
+    def get_shop_name(self, obj):
+        return obj.user_id.shop_name if obj.user_id else None
 
     # --------------------
     # Create order with items
@@ -122,10 +125,10 @@ class OrderSerializer(serializers.ModelSerializer):
             product = Product.objects.select_for_update().get(pk=item_data['product'].pk)
             quantity = item_data['quantity']
 
-            if product.stock_quantity < quantity:
-                raise serializers.ValidationError({
-                    'product': f"Not enough stock for {product.product_name}."
-                })
+            # if product.stock_quantity < quantity:
+            #     raise serializers.ValidationError({
+            #         'product': f"Not enough stock for {product.product_name}."
+            #     })
 
             product.stock_quantity -= quantity
             product.save()
@@ -166,7 +169,8 @@ class OrderSerializer(serializers.ModelSerializer):
         # Sum the total for all related OrderItems
         return sum(item.items_total() for item in obj.items.all())
     def get_final_amount(self, obj):
-        return float(obj.total_amount) + float(obj.delivery_charge)
+        total_amt = sum(item.items_total() for item in obj.items.all())
+        return float(total_amt) + float(obj.delivery_charge)
     
     def get_total_return_amount(self, obj):
         """Sum of all return item amounts"""
@@ -182,7 +186,3 @@ class OrderSerializer(serializers.ModelSerializer):
 
 
 
-class ReturnItemSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = ReturnItem
-        fields = '__all__'

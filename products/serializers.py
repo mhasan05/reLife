@@ -2,15 +2,20 @@ from rest_framework import serializers
 from .models import *
 
 class ProductSerializer(serializers.ModelSerializer):
-
-    discount_percent = serializers.SerializerMethodField()
+    generic_name = serializers.PrimaryKeyRelatedField(
+        queryset=GenericName.objects.all()
+    )
+    cost_price = serializers.FloatField()
+    mrp = serializers.FloatField()
+    selling_price = serializers.FloatField()
+    discount_percent = serializers.FloatField()
     category_name = serializers.SerializerMethodField()
     company_name = serializers.ReadOnlyField(source='company_id.company_name')
 
     class Meta:
         model = Product
         fields = [
-            'product_id', 'product_name', 'generic_name', 'product_description', 'product_image',
+            'product_id', 'product_name','generic_name', 'product_description', 'product_image',
             'sku','quantity_per_box', 'company_id','company_name', 'category_id', 'category_name', 'stock_quantity','cost_price',
             'mrp','selling_price', 'discount_percent', 'out_of_stock', 'is_active', 'created_on', 'updated_on'
         ]
@@ -24,6 +29,13 @@ class ProductSerializer(serializers.ModelSerializer):
         Returns a list of category names associated with the product.
         """
         return [category.name for category in obj.category_id.all()]
+        
+    def to_representation(self, instance):
+        """Show generic_name as its `name` instead of ID"""
+        rep = super().to_representation(instance)
+        if instance.generic_name:
+            rep['generic_name'] = instance.generic_name.name  # ✅ use GenericName.name
+        return rep
     
 class CompanySerializer(serializers.ModelSerializer):
     class Meta:
@@ -38,7 +50,7 @@ class ProductNameSerializer(serializers.ModelSerializer):
 class CategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = Product.category_id.field.related_model
-        fields = ['category_id', 'name', 'description', 'created_on', 'updated_on']
+        fields = ['category_id', 'name', 'description','is_active', 'created_on', 'updated_on']
 
 class GenericNameSerializer(serializers.ModelSerializer):
     class Meta:
