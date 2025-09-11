@@ -34,6 +34,7 @@ urlpatterns = [
 
     path("batch/add/", AddProductToBatch.as_view(), name="add-to-batch"),
     path("batch/<uuid:batch_id>/summary/", BatchSummary.as_view(), name="batch-summary"),
+    path("batch/<uuid:batch_id>/get_summary/", GetBatchSummary.as_view(), name="get-batch-summary"),
     path("batch/<uuid:batch_id>/confirm/", ConfirmBatch.as_view(), name="confirm-batch"),
     path("batch/<uuid:batch_id>/cancel/", CancelBatch.as_view(), name="cancel-batch"),
     

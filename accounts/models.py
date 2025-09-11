@@ -3,11 +3,26 @@ from django.contrib.auth.models import AbstractBaseUser,PermissionsMixin
 from django.utils import timezone
 from accounts.manager import UserManager
 
+
+class District(models.Model):
+    district_id = models.BigAutoField(primary_key=True)
+    name = models.CharField(max_length=100, unique=True)
+    created_on = models.DateTimeField(auto_now_add=True)
+    updated_on = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name_plural = "Districts"
+        ordering = ['name']
+
+    def __str__(self):
+        return self.name
+
 class Area(models.Model):
     class Meta:
         verbose_name_plural = "Area"
     area_id = models.BigAutoField(primary_key=True)
     area_name = models.CharField(max_length=100, unique=True)
+    district = models.ForeignKey(District, on_delete=models.CASCADE, related_name="areas",null=True,blank=True)
     is_active = models.BooleanField(default=True)
     created_on = models.DateTimeField(auto_now_add=True)
     created_by = models.CharField(max_length=100, blank=True, null=True)

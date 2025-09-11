@@ -1,13 +1,13 @@
 from rest_framework import viewsets
 from .models import UserAuth, Area, Address
-from .serializers import UserAuthSerializer, AreaSerializer, AddressSerializer
+from .serializers import *
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth import authenticate
-from accounts.models import Area
+from accounts.models import *
 from rest_framework.pagination import PageNumberPagination
 
 
@@ -257,3 +257,16 @@ class AreaViewSet(APIView):
 class AddressViewSet(viewsets.ModelViewSet):
     queryset = Address.objects.all()
     serializer_class = AddressSerializer
+
+
+class DistrictListAPIView(APIView):
+    """
+    API to list all districts
+    """
+    def get(self, request, *args, **kwargs):
+        districts = District.objects.all().order_by("name")
+        serializer = DistrictSerializer(districts, many=True)
+        return Response(
+        {"status": "success", "data": serializer.data},
+        status=status.HTTP_200_OK
+    )

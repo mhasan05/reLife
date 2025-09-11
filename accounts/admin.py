@@ -23,5 +23,6 @@ class UserAuthAdmin(admin.ModelAdmin):
 
 admin.site.register(UserAuth, UserAuthAdmin)
 admin.site.register(Address)
+admin.site.register(District)
 admin.site.register(Area)
 admin.site.unregister(Group)

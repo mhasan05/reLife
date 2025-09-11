@@ -475,6 +475,7 @@ class AddProductToBatch(APIView):
         product_id = request.data.get("product_id")
         new_stock_quantity = request.data.get("new_stock_quantity", 0)
         new_cost_price = request.data.get("new_cost_price", 0)
+        mrp = request.data.get("mrp", 0)
         new_selling_price = request.data.get("new_selling_price", 0)
         batch_id = request.data.get("batch_id")  # If frontend sends it
         user = request.user  # assuming request.user is from UserAuth
@@ -495,6 +496,7 @@ class AddProductToBatch(APIView):
             new_stock_quantity=new_stock_quantity,
             new_cost_price=new_cost_price,
             new_selling_price=new_selling_price,
+            mrp=mrp,
         )
 
         return Response(
@@ -525,6 +527,7 @@ class BatchSummary(APIView):
                 "product": u.product_id.product_name,
                 "stock": u.new_stock_quantity,
                 "cost_price": str(u.new_cost_price),
+                "mrp": str(u.mrp),
                 "selling_price": str(u.new_selling_price),
                 "total": str(u.total_amount),
             }
@@ -539,6 +542,36 @@ class BatchSummary(APIView):
             }
         )
 
+
+
+class GetBatchSummary(APIView):
+    def get(self, request, batch_id):
+        updates = TempProduct.objects.filter(batch_id=batch_id, user_id=request.user, is_confirmed=True)
+
+        if not updates.exists():
+            return Response({"message": "No products in this batch"}, status=status.HTTP_404_NOT_FOUND)
+
+        total_value = sum([u.total_amount for u in updates])
+        data = [
+            {
+                "id": u.id,
+                "product": u.product_id.product_name,
+                "stock": u.new_stock_quantity,
+                "cost_price": str(u.new_cost_price),
+                "mrp": str(u.mrp),
+                "selling_price": str(u.new_selling_price),
+                "total": str(u.total_amount),
+            }
+            for u in updates
+        ]
+        return Response(
+            {
+                "batch_id": batch_id,
+                "products": data,
+                "total_products": updates.count(),
+                "total_value": str(total_value),
+            }
+        )
 
 
 

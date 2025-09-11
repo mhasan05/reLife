@@ -8,6 +8,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.pagination import PageNumberPagination
 from settings.models import SiteInfoModel
 from notification.models import *
+from django.utils.dateparse import parse_datetime
 
 
 class OrderPagination(PageNumberPagination):
@@ -42,13 +43,20 @@ class OrderViewSet(APIView):
         })
 
     def post(self, request):
-        # Get delivery_charge from SiteInfoModel (fallback to 100.0 if not found)
+        # Get delivery_charge from SiteInfoModel (fallback to 0 if not found)
+        user = request.user
         site_info = SiteInfoModel.objects.first()
-        delivery_charge = site_info.delivery_charge if site_info else 100.0
+        delivery_charge = site_info.delivery_charge if site_info else 0
+        district_name = None
+        if user.area and user.area.district:
+            district_name = str(user.area.district.name)
 
         # Add delivery_charge to the request data before serialization
         data = request.data.copy()
-        data['delivery_charge'] = delivery_charge
+        if district_name and district_name.lower() == 'dhaka':
+            data['delivery_charge'] = 0
+        else:
+            data['delivery_charge'] = delivery_charge
         serializer = OrderSerializer(data=data)
         if serializer.is_valid():
             serializer.save()
@@ -151,4 +159,40 @@ class OrderItemViewSet(APIView):
             return Response({"status": "success", "message": "Order item deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
         except OrderItem.DoesNotExist:
             return Response({"status": "error", "message": "Order item not found"}, status=status.HTTP_404_NOT_FOUND)
+        
+
+
+
+
+class OrderFilterAPIView(APIView):
+    """
+    Filter orders by datetime range and area (shipping_address contains area)
+    """
+    def get(self, request, *args, **kwargs):
+        from_datetime = request.query_params.get('from_datetime')
+        to_datetime = request.query_params.get('to_datetime')
+        area = request.query_params.get('area')
+
+        if not from_datetime or not to_datetime or not area:
+            return Response({
+                "error": "from_datetime, to_datetime, and area are required parameters."
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        # Parse ISO 8601 datetime strings
+        from_dt = parse_datetime(from_datetime)
+        to_dt = parse_datetime(to_datetime)
+
+        if not from_dt or not to_dt:
+            return Response({
+                "error": "Invalid datetime format. Use ISO 8601 format: YYYY-MM-DDTHH:MM:SS"
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        # Filter orders by datetime and area
+        orders = Order.objects.filter(
+            order_date__range=(from_dt, to_dt),
+            user_id__area_id=area
+        )
+
+        serializer = OrderSerializer(orders, many=True)
+        return Response({"status": "success", "data": serializer.data}, status=status.HTTP_200_OK)
 
