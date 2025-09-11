@@ -22,6 +22,27 @@ class OrderViewSet(APIView):
 
     def get(self, request, pk=None):
         user = request.user
+        from_datetime = request.query_params.get('from_datetime')
+        to_datetime = request.query_params.get('to_datetime')
+        area = request.query_params.get('area')
+        if from_datetime and to_datetime and area:
+            # Parse ISO 8601 datetime strings
+            from_dt = parse_datetime(from_datetime)
+            to_dt = parse_datetime(to_datetime)
+
+            # Filter orders by datetime and area
+            orders = Order.objects.filter(
+                order_date__range=(from_dt, to_dt),
+                user_id__area_id=area
+            )
+            # Apply pagination
+            paginator = self.pagination_class
+            paginated_orders = paginator.paginate_queryset(orders, request)
+            serializer = OrderSerializer(orders, many=True)
+            return paginator.get_paginated_response({
+                "status": "success",
+                "data": serializer.data
+            })
         if pk:
             try:
                 order = Order.objects.get(pk=pk)
@@ -160,39 +181,4 @@ class OrderItemViewSet(APIView):
         except OrderItem.DoesNotExist:
             return Response({"status": "error", "message": "Order item not found"}, status=status.HTTP_404_NOT_FOUND)
         
-
-
-
-
-class OrderFilterAPIView(APIView):
-    """
-    Filter orders by datetime range and area (shipping_address contains area)
-    """
-    def get(self, request, *args, **kwargs):
-        from_datetime = request.query_params.get('from_datetime')
-        to_datetime = request.query_params.get('to_datetime')
-        area = request.query_params.get('area')
-
-        if not from_datetime or not to_datetime or not area:
-            return Response({
-                "error": "from_datetime, to_datetime, and area are required parameters."
-            }, status=status.HTTP_400_BAD_REQUEST)
-
-        # Parse ISO 8601 datetime strings
-        from_dt = parse_datetime(from_datetime)
-        to_dt = parse_datetime(to_datetime)
-
-        if not from_dt or not to_dt:
-            return Response({
-                "error": "Invalid datetime format. Use ISO 8601 format: YYYY-MM-DDTHH:MM:SS"
-            }, status=status.HTTP_400_BAD_REQUEST)
-
-        # Filter orders by datetime and area
-        orders = Order.objects.filter(
-            order_date__range=(from_dt, to_dt),
-            user_id__area_id=area
-        )
-
-        serializer = OrderSerializer(orders, many=True)
-        return Response({"status": "success", "data": serializer.data}, status=status.HTTP_200_OK)
 

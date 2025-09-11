@@ -7,6 +7,4 @@ urlpatterns = [
     path('order_items/', OrderItemViewSet.as_view(), name='order_item_list'),
     path('order_items/<int:pk>/', OrderItemViewSet.as_view(), name='order_item_detail'),
     path('pending_order/', PendingOrderViewSet.as_view(), name='pending_order'),
-
-    path('orders/filter/', OrderFilterAPIView.as_view(), name='order-filter'),
 ]
