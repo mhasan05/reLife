@@ -653,8 +653,16 @@ class CancelBatch(APIView):
 
 class UniqueBatchListAPIView(APIView):
     def get(self, request):
-        # Get unique TempProduct objects based on batch_id
-        unique_batches = TempProduct.objects.order_by('batch_id').distinct('batch_id')
-        # Serialize the data
-        serializer = GetTempProductBatchSerializer(unique_batches, many=True)
-        return Response({"status":"success","data":serializer.data},status=status.HTTP_200_OK)
+        # Get only distinct batch_id values
+        unique_batches = (
+            TempProduct.objects.values_list("batch_id", flat=True)
+            .distinct()
+        )
+
+        # Remove duplicates and keep them as list of dicts
+        unique_batches = [{"batch_id": bid} for bid in set(unique_batches)]
+
+        return Response(
+            {"status": "success", "data": unique_batches},
+            status=status.HTTP_200_OK,
+        )
