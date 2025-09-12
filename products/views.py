@@ -16,13 +16,57 @@ class ProductPagination(PageNumberPagination):
     page_size_query_param = 'page_size'  # let client override page size using ?page_size=
     max_page_size = 500
 
+class AllProductView(APIView):
+    permission_classes = [IsAuthenticated]
+    pagination_class = ProductPagination()
 
+    def get(self, request, pk=None):
+        if pk:
+            try:
+                product = Product.objects.get(pk=pk)
+                serializer = ProductSerializer(product)
+                return Response({"status": "success", "data": serializer.data}, status=status.HTTP_200_OK)
+            except Product.DoesNotExist:
+                return Response({"status": "error", "message": "Product not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        user = request.user
+        if user.is_superuser:
+            products = Product.objects.all().order_by('-created_on')
+            total_products = Product.objects.all().count()
+        else:
+            products = Product.objects.filter(is_active=True).order_by('product_name')
+            total_products = Product.objects.filter(is_active=True).count()
+            
+        
+        # Apply pagination
+        paginator = self.pagination_class
+        paginated_products = paginator.paginate_queryset(products, request)
+
+        serializer = ProductSerializer(products, many=True)
+        # Return paginated response
+        return paginator.get_paginated_response({
+            "status": "success",
+            "total_products": total_products,
+            "data": serializer.data
+        })
 
 class ProductView(APIView):
     permission_classes = [IsAuthenticated]
     pagination_class = ProductPagination()
 
     def get(self, request, pk=None):
+        src = request.query_params.get('src')
+        if src:
+            # Filter product by name
+            product = Product.objects.filter(product_name__icontains=src)
+            # Apply pagination
+            paginator = self.pagination_class
+            paginated_product = paginator.paginate_queryset(product, request)
+            serializer = ProductSerializer(paginated_product, many=True)
+            return paginator.get_paginated_response({
+                "status": "success",
+                "data": serializer.data
+            })
         if pk:
             try:
                 product = Product.objects.get(pk=pk)
