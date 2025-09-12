@@ -58,7 +58,7 @@ class ProductView(APIView):
         src = request.query_params.get('src')
         if src:
             # Filter product by name
-            product = Product.objects.filter(product_name__icontains=src)
+            product = Product.objects.filter(product_name__istartswith=src)
             # Apply pagination
             paginator = self.pagination_class
             paginated_product = paginator.paginate_queryset(product, request)
