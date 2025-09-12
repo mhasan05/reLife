@@ -40,6 +40,9 @@ urlpatterns = [
     path("batch/<uuid:batch_id>/get_summary/", GetBatchSummary.as_view(), name="get-batch-summary"),
     path("batch/<uuid:batch_id>/confirm/", ConfirmBatch.as_view(), name="confirm-batch"),
     path("batch/<uuid:batch_id>/cancel/", CancelBatch.as_view(), name="cancel-batch"),
+
+
+    path('all_batch_id', UniqueBatchListAPIView.as_view(), name='all_batch_id'),
     
 ]
 

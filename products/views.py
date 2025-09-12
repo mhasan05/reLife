@@ -644,3 +644,15 @@ class CancelBatch(APIView):
     def post(self, request, batch_id):
         deleted_count, _ = TempProduct.objects.filter(batch_id=batch_id, user_id=request.user, is_confirmed=False).delete()
         return Response({"message": f"Batch {batch_id} cancelled. {deleted_count} items removed."})
+
+
+
+
+
+class UniqueBatchListAPIView(APIView):
+    def get(self, request):
+        # Get unique TempProduct objects based on batch_id
+        unique_batches = TempProduct.objects.order_by('batch_id').distinct('batch_id')
+        # Serialize the data
+        serializer = GetTempProductBatchSerializer(unique_batches, many=True)
+        return Response({"status":"success","data":serializer.data},status=status.HTTP_200_OK)

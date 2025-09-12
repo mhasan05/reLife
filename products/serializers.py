@@ -65,3 +65,10 @@ class BannerImageSerializer(serializers.ModelSerializer):
     class Meta:
         model = BannerImages
         fields = '__all__'
+
+
+
+class GetTempProductBatchSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = TempProduct
+        fields = ['batch_id']
