@@ -44,7 +44,7 @@ class ProductView(APIView):
         paginator = self.pagination_class
         paginated_products = paginator.paginate_queryset(products, request)
 
-        serializer = ProductSerializer(products, many=True)
+        serializer = ProductSerializer(paginated_products, many=True)
         # Return paginated response
         return paginator.get_paginated_response({
             "status": "success",

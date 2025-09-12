@@ -38,7 +38,7 @@ class OrderViewSet(APIView):
             # Apply pagination
             paginator = self.pagination_class
             paginated_orders = paginator.paginate_queryset(orders, request)
-            serializer = OrderSerializer(orders, many=True)
+            serializer = OrderSerializer(paginated_orders, many=True)
             return paginator.get_paginated_response({
                 "status": "success",
                 "data": serializer.data

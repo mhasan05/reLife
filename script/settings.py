@@ -26,7 +26,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-tgq04$8a96x609mhwsy_1+(*79^t1luo5zi2j4odf=n!)@m60u'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = ['*']
 
@@ -121,16 +121,14 @@ WSGI_APPLICATION = 'script.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'elitdakz_bdm',
-        'USER': 'elitdakz_bdm',
-        'PASSWORD': 'BDMUSER@01',
-        'HOST': 'localhost',
+        'NAME': 'backend_db',
+        'USER': 'backend_user',
+        'PASSWORD': 'GK@TE@Sohel2025',
+        'HOST': 'localhost',   # or VPS IP if external
         'PORT': '3306',
-        'OPTIONS': {
-            'charset': 'utf8mb4',
-        },
     }
 }
+
 
 
 # Password validation
@@ -157,7 +155,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'Asia/Dhaka'
 
 USE_I18N = True
 
@@ -193,7 +191,7 @@ REST_FRAMEWORK = {
 
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",  # React/Vue frontend
-    "http://mehedidev.net",  # Production frontend
+    "http://147.93.104.182",  # Production frontend
     "https://bdm-app-dashboard-iz4z.vercel.app",  # Production frontend
 ]
 CORS_ALLOW_CREDENTIALS = True
